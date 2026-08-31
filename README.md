@@ -240,6 +240,13 @@ Netlify serves static sites, so it hosts the `client` build only. The Express AP
 database run on a separate host — the committed `render.yaml` blueprint sets both up on Render, but
 Railway or Fly.io work the same way.
 
+The two deployments reference each other, so each variable holds the *other* side's URL:
+
+| Where | Variable | Value | Notes |
+| ----- | -------- | ----- | ----- |
+| Netlify | `VITE_API_URL` | `https://teamflow-api.onrender.com/api` | The API host, **not** the Netlify URL. Keep the `/api` suffix. |
+| Render | `CLIENT_URL` | `https://your-site.netlify.app` | Origin only — no path, no trailing slash. |
+
 ### Frontend on Netlify
 
 `netlify.toml` already contains the required configuration:
@@ -261,6 +268,12 @@ Point Render at the repository and it will pick up `render.yaml`, which provisio
 instance, injects `DATABASE_URL`, generates a `JWT_SECRET`, builds with
 `npm run build -w server` (Prisma client generation plus TypeScript) and starts with
 `npm run start -w server` (which runs `prisma migrate deploy` before booting the server).
+
+The install step uses `npm install --include=dev` on purpose. `NODE_ENV=production` makes npm skip
+devDependencies, which would leave the build without `typescript` and `@types/node` and fail with
+`error TS2688: Cannot find type definition file for 'node'`. For the same reason `prisma` is a
+runtime dependency rather than a dev dependency: the start command needs its CLI to apply
+migrations.
 
 Set `CLIENT_URL` to your Netlify origin, for example `https://teamflow.netlify.app`. It accepts a
 comma-separated list, so you can add deploy-preview origins alongside the production one. Render

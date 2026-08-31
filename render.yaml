@@ -9,7 +9,9 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm install && npm run build -w server
+    # NODE_ENV=production makes npm skip devDependencies, but the build needs
+    # typescript, @types/node and prisma, so dev dependencies are forced here.
+    buildCommand: npm install --include=dev && npm run build -w server
     startCommand: npm run start -w server
     healthCheckPath: /api/health
     envVars:
